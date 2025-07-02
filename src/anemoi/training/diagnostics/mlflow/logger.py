@@ -509,8 +509,11 @@ class AnemoiMLflowLogger(MLFlowLogger):
             "training",
             "diagnostics",
             "metadata.config",
+            "metadata.dataset.sources",
             "metadata.dataset.variables_metadata",
+            "metadata.dataset.specific.forward.forward.datasets",
             "metadata.dataset.specific.forward.forward.attrs.variables_metadata",
+            "supporting_arrays"
         ]
         keys_to_remove = [key for key in params if any(key.startswith(prefix) for prefix in prefixes_to_remove)]
         for key in keys_to_remove:
