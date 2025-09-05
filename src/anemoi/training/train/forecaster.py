@@ -327,6 +327,12 @@ class GraphForecaster(pl.LightningModule):
                     ] * pressure_level.scaler(
                         int(split[-1]),
                     )
+                elif split[0] in config.training.variable_loss_scaling:
+                    variable_loss_scaling[idx] = config.training.variable_loss_scaling.get(split[0])[
+                        "ratio"
+                    ] * config.training.variable_loss_scaling.get(split[0]).scaler(
+                        int(split[-1]),
+                    )
                 else:
                     LOGGER.debug("Parameter %s was not scaled.", key)
             else:

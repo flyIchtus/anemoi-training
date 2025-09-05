@@ -46,7 +46,7 @@ class StepReluPressureLevelScaler(BasePressureLevelScaler):
     """Relu pressure scaler with steps dependening on threshold levels
     """
 
-    def __init__(self, slope: float = 1.0 / 1000, minimum: float = 0.0, steps: Dict[str,Any]) -> None:
+    def __init__(self, slope: float, minimum: float, steps: Dict[str,Any]) -> None:
         """Initialise Scaler with slope and minimum.
 
         Parameters
