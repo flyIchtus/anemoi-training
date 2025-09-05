@@ -12,6 +12,7 @@ import logging
 from abc import ABC
 from abc import abstractmethod
 
+from typing import Dict
 import numpy as np
 
 LOGGER = logging.getLogger(__name__)
@@ -40,6 +41,41 @@ class BasePressureLevelScaler(ABC):
     @abstractmethod
     def scaler(self, plev: float) -> np.ndarray: ...
 
+
+class StepReluPressureLevelScaler(BasePressureLevelScaler):
+    """Relu pressure scaler with steps dependening on threshold levels
+    """
+
+    def __init__(self, slope: float = 1.0 / 1000, minimum: float = 0.0, steps: Dict[str,Any]) -> None:
+        """Initialise Scaler with slope and minimum.
+
+        Parameters
+        ----------
+        slope : float
+            Slope of the scaling function.
+        minimum : float
+            Minimum value of the scaling function.
+
+        """
+        super().__init__()
+        self.steps = steps
+        for step in steps:
+            assert'slope' in step
+            assert 'minimum' in step_config
+
+    
+    def _get_step(self, level: int) -> int:
+        level_step: int | None = None
+        for step in self.steps:
+            if level >= step and (level_step is None or step > level_step):
+                level_step = step
+        if level_step is None:
+            raise ValueError(f"No valid step for level {level}.")
+        return level_step
+    
+    def scaler(self, plev: float) -> np.ndarray:
+        step_config = self.steps[_self._get_step(plev)]        
+        return max(float(step_config['miminum']), plev * float(step_config['slope']))
 
 class LinearPressureLevelScaler(BasePressureLevelScaler):
     """Linear with slope self.slope, yaxis shift by self.minimum."""
