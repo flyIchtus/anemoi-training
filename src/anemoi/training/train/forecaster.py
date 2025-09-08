@@ -328,11 +328,15 @@ class GraphForecaster(pl.LightningModule):
                         int(split[-1]),
                     )
                 elif split[0] in config.training.variable_loss_scaling:
+                    
+                    split_scaler = instantiate(config.training.variable_loss_scaling.get(split[0]).scaler)
+                    
                     variable_loss_scaling[idx] = config.training.variable_loss_scaling.get(split[0])[
                         "ratio"
                     ] * config.training.variable_loss_scaling.get(split[0]).scaler(
                         int(split[-1]),
                     )
+                    LOGGER.info(f"Using {split[0]} scaler")
                 else:
                     LOGGER.debug("Parameter %s was not scaled.", key)
             else:
