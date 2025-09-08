@@ -12,7 +12,7 @@ import logging
 from abc import ABC
 from abc import abstractmethod
 
-from typing import Dict
+from typing import Any, Dict
 import numpy as np
 
 LOGGER = logging.getLogger(__name__)
