@@ -125,7 +125,7 @@ class AnemoiTrainer:
                 self.config.hardware.paths.graph,
                 self.config.hardware.files.graph,
             )
-            LOGGER.info(f"graph_filename exists: {graph_filename.exists()}")
+            LOGGER.info(f"graph_filename exists: {graph_filename.exists()}, overwrite {self.config.graph.overwrite}")
             if graph_filename.exists() and not self.config.graph.overwrite:
                 LOGGER.info("Loading graph data from %s", graph_filename)
                 return torch.load(graph_filename)
