@@ -333,7 +333,7 @@ class GraphForecaster(pl.LightningModule):
                     
                     variable_loss_scaling[idx] = config.training.variable_loss_scaling.get(split[0])[
                         "ratio"
-                    ] * split_scaler(
+                    ] * split_scaler.scaler(
                         int(split[-1]),
                     )
                     LOGGER.info(f"Using {split[0]} scaler")
