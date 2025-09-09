@@ -330,7 +330,7 @@ class GraphForecaster(pl.LightningModule):
                     ] * split_scaler.scaler(
                         int(split[-1]),
                     )
-                    LOGGER.info(f"Using {split[0]} specific scaler")
+                    LOGGER.info(f"Using {split[0]} specific scaler ; scaling : {variable_loss_scaling[idx]} ")
                 elif split[0] in config.training.variable_loss_scaling.pl:
                     LOGGER.info(f"{split[0]} : scaler pl")
                     variable_loss_scaling[idx] = config.training.variable_loss_scaling.pl[
