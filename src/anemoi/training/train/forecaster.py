@@ -323,6 +323,7 @@ class GraphForecaster(pl.LightningModule):
                 LOGGER.info(f"Scaler : {split}")
                 # Apply pressure level scaling
                 if split[0] in config.training.variable_loss_scaling.pl:
+                    LOGGER.info(f"{split[0]} :  scaler pl")
                     variable_loss_scaling[idx] = config.training.variable_loss_scaling.pl[
                         split[0]
                     ] * pressure_level.scaler(
