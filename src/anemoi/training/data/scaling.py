@@ -75,7 +75,7 @@ class StepReluPressureLevelScaler(BasePressureLevelScaler):
     
     def scaler(self, plev: float) -> np.ndarray:
         step_config = self.steps[self._get_step(plev)]        
-        return max(float(step_config['miminum']), plev * float(step_config['slope']))
+        return max(float(step_config['minimum']), plev * float(step_config['slope']))
 
 class LinearPressureLevelScaler(BasePressureLevelScaler):
     """Linear with slope self.slope, yaxis shift by self.minimum."""
