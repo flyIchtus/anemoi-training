@@ -59,10 +59,10 @@ class StepReluPressureLevelScaler(BasePressureLevelScaler):
         """
         super().__init__(slope=0.001, minimum=0.0)
         self.steps = steps
-        for step in steps:
-            assert'slope' in step
-            assert 'minimum' in step_config
 
+        for step in steps:
+            assert 'slope' in steps[step]
+            assert 'minimum' in steps[step]
     
     def _get_step(self, level: int) -> int:
         level_step: int | None = None
