@@ -320,6 +320,7 @@ class GraphForecaster(pl.LightningModule):
         for key, idx in data_indices.internal_model.output.name_to_index.items():
             split = key.split("_")
             if len(split) > 1 and split[-1].isdigit():
+                LOGGER.info(f"Scaler : {split}")
                 # Apply pressure level scaling
                 if split[0] in config.training.variable_loss_scaling.pl:
                     variable_loss_scaling[idx] = config.training.variable_loss_scaling.pl[
@@ -327,13 +328,12 @@ class GraphForecaster(pl.LightningModule):
                     ] * pressure_level.scaler(
                         int(split[-1]),
                     )
-                elif split[0] in config.training.variable_loss_scaling:
-                    
+                elif split[0] in config.training.variable_loss_scaling.keys():
                     split_scaler = instantiate(config.training.variable_loss_scaling.get(split[0]).scaler)
                     
                     variable_loss_scaling[idx] = config.training.variable_loss_scaling.get(split[0])[
                         "ratio"
-                    ] * config.training.variable_loss_scaling.get(split[0]).scaler(
+                    ] * split_scaler(
                         int(split[-1]),
                     )
                     LOGGER.info(f"Using {split[0]} scaler")
