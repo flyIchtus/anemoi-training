@@ -1070,8 +1070,8 @@ class PlotZoomedSample(PlotSample):
         if self.latlons is None:
             self.latlons = np.rad2deg(pl_module.latlons_data.clone().cpu().numpy())
         lat, lon = self.latlons[:,0], self.latlons[:,1]
-        latnew = lat[(lat <=area['lat_max']) & (lat >= area['lat_min']) & (lon <=area['lon_max']) & (lon >= area['lon_min'])]
-        lonnew = lon[(lon <=area['lon_max']) & (lon >= area['lon_min']) & (lat <=area['lat_max']) & (lat >= area['lat_min'])]
+        latnew = lat[(lat <= self.area['lat_max']) & (lat >= self.area['lat_min']) & (lon <=self.area['lon_max']) & (lon >= self.area['lon_min'])]
+        lonnew = lon[(lon <= self.area['lon_max']) & (lon >= self.area['lon_min']) & (lat <=self.area['lat_max']) & (lat >= self.area['lat_min'])]
         self.latlons = np.stack([lat,lon],axis=1)
         print("latlon", self.latlons.shape)
         local_rank = pl_module.local_rank
@@ -1090,9 +1090,16 @@ class PlotZoomedSample(PlotSample):
             in_place=False,
         )
         output_tensor = pl_module.output_mask.apply(output_tensor, dim=1, fill_value=np.nan).numpy()
+        
+        print("output tensor shape", output_tensor.shape)
+        
         data[1:, ...] = pl_module.output_mask.apply(data[1:, ...], dim=2, fill_value=np.nan)
-        data = data.numpy()
-
+        data = data[:,(lon <= self.area['lon_max']) & (lon >= self.area['lon_min']) & (lat <=self.area['lat_max']) & (lat >= self.area['lat_min']),:].numpy()
+        output_tensor = output_tensor[:,(lon <= self.area['lon_max']) & (lon >= self.area['lon_min']) & (lat <=self.area['lat_max']) & (lat >= self.area['lat_min']),:]
+        
+        print("data filtered", data.shape)
+        print("output tensor filtered", output_tensor.shape)
+        
         for rollout_step in range(pl_module.rollout):
             fig = plot_predicted_multilevel_flat_sample(
                 plot_parameters_dict,
