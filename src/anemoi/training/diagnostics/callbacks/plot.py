@@ -1094,7 +1094,7 @@ class PlotZoomedSample(PlotSample):
         print("output tensor shape", output_tensor.shape)
         
         data[1:, ...] = pl_module.output_mask.apply(data[1:, ...], dim=2, fill_value=np.nan)
-        data = data[:,(lon <= self.area['lon_max']) & (lon >= self.area['lon_min']) & (lat <=self.area['lat_max']) & (lat >= self.area['lat_min']),:].numpy()
+        data = data[:,:,(lon <= self.area['lon_max']) & (lon >= self.area['lon_min']) & (lat <=self.area['lat_max']) & (lat >= self.area['lat_min']),:].numpy()
         output_tensor = output_tensor[:,(lon <= self.area['lon_max']) & (lon >= self.area['lon_min']) & (lat <=self.area['lat_max']) & (lat >= self.area['lat_min']),:]
         
         print("data filtered", data.shape)
