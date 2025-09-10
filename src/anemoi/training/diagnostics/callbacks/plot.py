@@ -1072,7 +1072,7 @@ class PlotZoomedSample(PlotSample):
         lat, lon = self.latlons[:,0], self.latlons[:,1]
         latnew = lat[(lat <= self.area['lat_max']) & (lat >= self.area['lat_min']) & (lon <=self.area['lon_max']) & (lon >= self.area['lon_min'])]
         lonnew = lon[(lon <= self.area['lon_max']) & (lon >= self.area['lon_min']) & (lat <=self.area['lat_max']) & (lat >= self.area['lat_min'])]
-        self.latlons = np.stack([lat,lon],axis=1)
+        self.latlons = np.stack([latnew,lonnew],axis=1)
         print("latlon", self.latlons.shape)
         local_rank = pl_module.local_rank
 
