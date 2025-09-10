@@ -1024,24 +1024,20 @@ class PlotZoomedSample(PlotSample):
             Precip variable names, by default None
         per_sample : int, optional
             Number of plots per sample, by default 6
-        
         every_n_batches : int, optional
             Batch frequency to plot at, by default None
         """
-        super().__init__(config, every_n_batches=every_n_batches)
-        self.sample_idx = sample_idx
-        self.parameters = parameters
-        self.area = area
+        super().__init__(
+            config, 
+            sample_idx,
+            parameters,
+            accumulation_levels_plot,
+            cmap_accumulation,
+            precip_and_related_fields=precip_and_related_fields,
+            per_sample=per_sample,
+            every_n_batches=every_n_batches)
         
-        self.precip_and_related_fields = precip_and_related_fields
-        self.accumulation_levels_plot = accumulation_levels_plot
-        self.cmap_accumulation = cmap_accumulation
-        self.per_sample = per_sample
-
-        LOGGER.info(
-            "Using defined accumulation colormap for fields: %s",
-            self.precip_and_related_fields,
-        )
+        self.area = area
 
     @rank_zero_only
     def _plot(
