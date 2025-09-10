@@ -989,6 +989,136 @@ class PlotSample(BasePerBatchPlotCallback):
                 exp_log_tag=f"val_pred_sample_rstep{rollout_step:02d}_rank{local_rank:01d}",
             )
 
+class PlotZoomedSample(PlotSample):
+    """Plots a post-processed sample: input, target and prediction, on a zoomed area."""
+
+    def __init__(
+        self,
+        config: OmegaConf,
+        sample_idx: int,
+        parameters: list[str],
+        accumulation_levels_plot: list[float],
+        cmap_accumulation: list[str],
+        area: dict[str,Any],
+        precip_and_related_fields: list[str] | None = None,
+        per_sample: int = 6,
+        every_n_batches: int | None = None,
+    ) -> None:
+        """Initialise the PlotSample callback.
+
+        Parameters
+        ----------
+        config : OmegaConf
+            Config object
+        sample_idx : int
+            Sample to plot
+        parameters : list[str]
+            Parameters to plot
+        accumulation_levels_plot : list[float]
+            Accumulation levels to plot
+        cmap_accumulation : list[str]
+            Colors of the accumulation levels
+        area: dict[str,Any]
+            Area dictionary containing lat_min, lat_max, lon_min, lon_max of the zoom
+        precip_and_related_fields : list[str] | None, optional
+            Precip variable names, by default None
+        per_sample : int, optional
+            Number of plots per sample, by default 6
+        
+        every_n_batches : int, optional
+            Batch frequency to plot at, by default None
+        """
+        super().__init__(config, every_n_batches=every_n_batches)
+        self.sample_idx = sample_idx
+        self.parameters = parameters
+        self.area = area
+        
+        self.precip_and_related_fields = precip_and_related_fields
+        self.accumulation_levels_plot = accumulation_levels_plot
+        self.cmap_accumulation = cmap_accumulation
+        self.per_sample = per_sample
+
+        LOGGER.info(
+            "Using defined accumulation colormap for fields: %s",
+            self.precip_and_related_fields,
+        )
+
+    @rank_zero_only
+    def _plot(
+        self,
+        trainer: pl.Trainer,
+        pl_module: pl.LightningModule,
+        outputs: list[torch.Tensor],
+        batch: torch.Tensor,
+        batch_idx: int,
+        epoch: int,
+    ) -> None:
+        logger = trainer.logger
+
+        # Build dictionary of indices and parameters to be plotted
+        diagnostics = [] if self.config.data.diagnostic is None else self.config.data.diagnostic
+        plot_parameters_dict = {
+            pl_module.data_indices.model.output.name_to_index[name]: (
+                name,
+                name not in diagnostics,
+            )
+            for name in self.parameters
+        }
+
+        # When running in Async mode, it might happen that in the last epoch these tensors
+        # have been moved to the cpu (and then the denormalising would fail as the 'input_tensor' would be on CUDA
+        # but internal ones would be on the cpu), The lines below allow to address this problem
+        if self.post_processors is None:
+            # Copy to be used across all the training cycle
+            self.post_processors = copy.deepcopy(pl_module.model.post_processors).cpu()
+        if self.latlons is None:
+            self.latlons = np.rad2deg(pl_module.latlons_data.clone().cpu().numpy())
+        lat, lon = self.latlons[:,0], self.latlons[:,1]
+        latnew = lat[(lat <=area['lat_max']) & (lat >= area['lat_min']) & (lon <=area['lon_max']) & (lon >= area['lon_min'])]
+        lonnew = lon[(lon <=area['lon_max']) & (lon >= area['lon_min']) & (lat <=area['lat_max']) & (lat >= area['lat_min'])]
+        self.latlons = np.stack([lat,lon],axis=1)
+        print("latlon", self.latlons.shape)
+        local_rank = pl_module.local_rank
+
+        batch = pl_module.model.pre_processors(batch, in_place=False)
+        input_tensor = batch[
+            self.sample_idx,
+            pl_module.multi_step - 1 : pl_module.multi_step + pl_module.rollout + 1,
+            ...,
+            pl_module.data_indices.internal_data.output.full,
+        ].cpu()
+        data = self.post_processors(input_tensor)
+        print("data", data.shape)
+        output_tensor = self.post_processors(
+            torch.cat(tuple(x[self.sample_idx : self.sample_idx + 1, ...].cpu() for x in outputs[1])),
+            in_place=False,
+        )
+        output_tensor = pl_module.output_mask.apply(output_tensor, dim=1, fill_value=np.nan).numpy()
+        data[1:, ...] = pl_module.output_mask.apply(data[1:, ...], dim=2, fill_value=np.nan)
+        data = data.numpy()
+
+        for rollout_step in range(pl_module.rollout):
+            fig = plot_predicted_multilevel_flat_sample(
+                plot_parameters_dict,
+                self.per_sample,
+                self.latlons,
+                self.accumulation_levels_plot,
+                self.cmap_accumulation,
+                data[0, ...].squeeze(),
+                data[rollout_step + 1, ...].squeeze(),
+                output_tensor[rollout_step, ...],
+                datashader=self.datashader_plotting,
+                precip_and_related_fields=self.precip_and_related_fields,
+            )
+
+            self._output_figure(
+                logger,
+                fig,
+                epoch=epoch,
+                tag=f"gnn_pred_val_sample_rstep{rollout_step:02d}_batch{batch_idx:04d}_rank0",
+                exp_log_tag=f"val_pred_sample_rstep{rollout_step:02d}_rank{local_rank:01d}",
+            )
+
 
 class BasePlotAdditionalMetrics(BasePerBatchPlotCallback):
     """Base processing class for additional metrics."""
